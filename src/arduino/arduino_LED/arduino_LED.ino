@@ -12,7 +12,7 @@ void setup() {
 }
 
 void loop() {
-    int redValue;
+  int redValue;
   int greenValue;
   int blueValue;
   
