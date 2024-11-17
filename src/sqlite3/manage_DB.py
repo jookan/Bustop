@@ -38,10 +38,6 @@ def update_score(con,cur, driver_name, deduction_amount):
         con.commit()
 
         print(f'{driver_name}의 점수가 {deduction_amount}만큼 차감되어, 새로운 점수는 {new_score}입니다.')
+    con.commit()
 
-con = sqlite3.connect(DB)
-cur = con.cursor()
-
-create_database(con, cur)
-con.close()
 

@@ -145,6 +145,7 @@ def main():
             break
 
     update_score(con, cur, driver_name, count)
+    con.close()
     cap.release()
     ser.close()
     cv2.destroyAllWindows()
