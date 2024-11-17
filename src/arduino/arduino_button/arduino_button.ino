@@ -23,7 +23,6 @@ void loop() {
   Serial.println(readValue);
 
   if (readValue != previousState) {
-    lcd.clear();
     if (readValue == 1){
       lcd.setCursor(0, 0);    
       lcd.print("moving detected!!");             
@@ -37,6 +36,7 @@ void loop() {
     tone(8,392,250);
   }
   else {
+    lcd.clear();
     lcd.setCursor(0, 0);    
     lcd.print("STOP");             
     lcd.setCursor(0, 1);    

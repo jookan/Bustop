@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 import serial
 import time
+import sqlite3
+
+from Bustop.src.sqlite3.manage_DB import update_score
 
 # Yolo 모델 초기화
 net = cv2.dnn.readNet("yolov2-tiny.weights", "yolov2-tiny.cfg")
@@ -12,7 +15,7 @@ colors = np.random.uniform(0, 255, size=(len(classes), 3))
 
 # 설정값: 임계값과 최대 차이 픽셀 수 설정
 THRESHOLD = 50
-MAX_DIFF = 20
+MAX_DIFF = 10
 NO_MOTION_DELAY = 1.5  # 움직임이 없을 때 초록불로 바뀌는 딜레이 (초 단위)
 
 # Arduino와의 시리얼 통신 설정
@@ -65,6 +68,11 @@ def detect_objects(frame):
 def main():
     global last_motion_time, motion_detected
 
+    DB = "bus_database.db"
+    con = sqlite3.connect(DB)
+    cur = con.cursor()
+    driver_name = "이주환"
+
     cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 320)
@@ -75,6 +83,8 @@ def main():
 
     ret, frame_a = cap.read()
     ret, frame_b = cap.read()
+
+    count = 0
 
     while ret:
         ret, frame_c = cap.read()
@@ -108,16 +118,20 @@ def main():
                 cv2.rectangle(draw_frame, (x, y), (x + w, y + h), color, 2)
                 cv2.putText(draw_frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-        # 움직임 감지 여부에 따라 Arduino로 신호 전송
+        # 움직임 감지 여부에 따라 Arduino로 신호 전송 및 DB 점수 업데이트
         if diff_cnt > MAX_DIFF:
             last_motion_time = current_time
             motion_detected = True
-            print("움직임 감지됨, 빨간불 켜짐")
             ser.write(b'1')
+            if ser.in_waiting > 0 :
+                get_data = ser.readline()
+                if get_data :
+                    count += 0.2
+                    print("엑셀 밟음")
             time.sleep(0.05)
+
         else:
             if (current_time - last_motion_time) > NO_MOTION_DELAY and motion_detected:
-                print("움직임이 멈춤, 초록불 켜짐")
                 ser.write(b'0')
                 motion_detected = False
                 time.sleep(0.05)
@@ -130,6 +144,7 @@ def main():
         if cv2.waitKey(1) & 0xFF == 27:
             break
 
+    update_score(con, cur, driver_name, count)
     cap.release()
     ser.close()
     cv2.destroyAllWindows()
