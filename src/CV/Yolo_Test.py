@@ -3,8 +3,11 @@ import numpy as np
 import serial
 import time
 import sqlite3
+import threading
 
 from Bustop.src.sqlite3.manage_DB import update_score
+from Bustop.src.login_page.app import run_flask, driver_name_event, get_driver_name
+driver_name = None
 
 # Yolo 모델 초기화
 net = cv2.dnn.readNet("yolov2-tiny.weights", "yolov2-tiny.cfg")
@@ -65,13 +68,12 @@ def detect_objects(frame):
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
     return class_ids, confidences, boxes, indexes
 
-def main():
+def run_cv() :
     global last_motion_time, motion_detected
 
-    DB = "bus_database.db"
-    con = sqlite3.connect(DB)
+    db_path = "C:/Users/이주환/Desktop/SSU/Bustop/src/sqlite3/bus_database.db"
+    con = sqlite3.connect(db_path)
     cur = con.cursor()
-    driver_name = "이주환"
 
     cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
@@ -149,6 +151,18 @@ def main():
     cap.release()
     ser.close()
     cv2.destroyAllWindows()
+
+def main() :
+    global driver_name
+
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.daemon = True
+    flask_thread.start()
+
+    driver_name_event.wait()  # Flask 서버에서 driver_name이 설정될 때까지 대기
+    driver_name = get_driver_name()
+
+    run_cv()
 
 if __name__ == "__main__":
     main()
