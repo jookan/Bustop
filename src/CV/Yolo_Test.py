@@ -134,7 +134,7 @@ def run_cv() :
 
         else:
             if (current_time - last_motion_time) > NO_MOTION_DELAY and motion_detected:
-                ser.write(b'0')
+                #ser.write(b'0')
                 motion_detected = False
                 time.sleep(0.05)
 

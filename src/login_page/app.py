@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for
 import threading
 
 app = Flask(__name__)
@@ -23,8 +23,14 @@ def index():
         name = request.form["driver_name"]
         print(f"Received driver name: {name}")
         set_driver_name(name)
-        return "Driver name received. You can close this page."
+        return redirect(url_for('confirmation'))  # /confirm으로 리다이렉트
     return render_template("index.html")
 
+@app.route('/confirm', methods=['GET'], endpoint='confirmation')
+def confirmation():
+    """확인 페이지를 렌더링하는 함수"""
+    return render_template("confirmation.html")
+
 def run_flask():
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, threaded=True)
+
